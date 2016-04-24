@@ -10,6 +10,8 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
+import com.cmdi.runi.service.SubscribeService;
+
 public class JedisUtil {
 
 	private static JedisPool jedisPool;
@@ -455,4 +457,29 @@ public class JedisUtil {
 		return len;
 	}
 
+	public static void publish(byte[] channel, byte[] message) {
+		Jedis jedis = null;
+		try {
+			jedis = jedisPool.getResource();
+			jedis.publish(channel, message);
+		} catch (Exception e) {
+			jedisPool.returnBrokenResource(jedis);
+			e.printStackTrace();
+		} finally {
+			close(jedis);
+		}
+	}
+
+	public static void subscribe(byte[] channel) {
+		Jedis jedis = null;
+		try {
+			jedis = jedisPool.getResource();
+			jedis.subscribe(new SubscribeService(), channel);
+		} catch (Exception e) {
+			jedisPool.returnBrokenResource(jedis);
+			e.printStackTrace();
+		} finally {
+			close(jedis);
+		}
+	}
 }
