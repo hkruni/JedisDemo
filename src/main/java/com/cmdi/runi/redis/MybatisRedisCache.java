@@ -10,6 +10,8 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.cache.CacheKey;
 
+import com.cmdi.runi.util.StringUtils;
+
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;

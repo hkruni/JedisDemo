@@ -24,9 +24,7 @@ public class RedisUtilTest {
 	public RedisUtilTest(String ip, int prot) {
 		if (pool == null) {
 			JedisPoolConfig config = new JedisPoolConfig();
-			config.setMaxActive(500);
 			config.setMaxIdle(5);
-			config.setMaxWait(1000 * 100);
 			config.setTestOnBorrow(true);
 			pool = new JedisPool(config, ip, prot, 100000);
 		}
@@ -1417,7 +1415,7 @@ public class RedisUtilTest {
 	 * @param scoreMembers
 	 * @return
 	 */
-	public Long zadd(String key, Map<Double, String> scoreMembers) {
+	public Long zadd(String key, Map<String, Double> scoreMembers) {
 		Jedis jedis = null;
 		Long res = null;
 		try {

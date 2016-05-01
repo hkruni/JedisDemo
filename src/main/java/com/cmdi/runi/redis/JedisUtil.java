@@ -1,16 +1,16 @@
 package com.cmdi.runi.redis;
 
 import java.io.InputStream;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import redis.clients.jedis.BinaryJedisPubSub;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
-
-import com.cmdi.runi.service.SubscribeService;
 
 public class JedisUtil {
 
@@ -34,6 +34,17 @@ public class JedisUtil {
 
 		JedisPoolConfig config = new JedisPoolConfig();
 		jedisPool = new JedisPool(config, masterIp, masterPort);
+	}
+
+	public static Jedis getJedis() {
+		Jedis jedis = null;
+		try {
+			jedis = jedisPool.getResource();
+		} catch (Exception e) {
+			jedisPool.returnBrokenResource(jedis);
+		}
+
+		return jedis;
 	}
 
 	public static void close(Jedis jedis) {
@@ -327,6 +338,37 @@ public class JedisUtil {
 		return bytes;
 	}
 
+	public static void lrem(byte[] key, byte[] value) {
+		Jedis jedis = null;
+		try {
+			jedis = jedisPool.getResource();
+			/**
+			 * count 的值可以是以下几种： count > 0 : 从表头开始向表尾搜索，移除与 value 相等的元素，数量为 count
+			 * count < 0 :从表尾开始向表头搜索，移除与 value 相等的元素，数量为 count 的绝对值。 count = 0:
+			 * 移除表中所有与value 相等的值。
+			 */
+			jedis.lrem(key, 0, value);
+		} catch (Exception e) {
+			jedisPool.returnBrokenResource(jedis);
+			e.printStackTrace();
+		} finally {
+			close(jedis);
+		}
+	}
+
+	public static void ltrim(byte[] key, long start, long end) {
+		Jedis jedis = null;
+		try {
+			jedis = jedisPool.getResource();
+			jedis.ltrim(key, start, end);
+		} catch (Exception e) {
+			jedisPool.returnBrokenResource(jedis);
+			e.printStackTrace();
+		} finally {
+			close(jedis);
+		}
+	}
+
 	public static void hmset(Object key, Map<String, String> hash) {
 		Jedis jedis = null;
 		try {
@@ -393,6 +435,43 @@ public class JedisUtil {
 		return result;
 	}
 
+	public static void hincrby(String key, String hash, int count) {
+		Jedis jedis = null;
+		try {
+			jedis = jedisPool.getResource();
+			jedis.hincrBy(key, hash, count);
+
+		} catch (Exception e) {
+			// 释放redis对象
+			jedisPool.returnBrokenResource(jedis);
+			e.printStackTrace();
+
+		} finally {
+			// 返还到连接池
+			close(jedis);
+		}
+	}
+
+	public static Map hgetAll(String key) {
+		Jedis jedis = null;
+		Map<String, String> map = null;
+		try {
+			jedis = jedisPool.getResource();
+			map = jedis.hgetAll(key);
+
+		} catch (Exception e) {
+			// 释放redis对象
+			jedisPool.returnBrokenResource(jedis);
+			e.printStackTrace();
+
+		} finally {
+			// 返还到连接池
+			close(jedis);
+		}
+
+		return map;
+	}
+
 	public static List<byte[]> lrange(byte[] key, int from, int to) {
 		List<byte[]> result = null;
 		Jedis jedis = null;
@@ -408,7 +487,6 @@ public class JedisUtil {
 		} finally {
 			// 返还到连接池
 			close(jedis);
-
 		}
 		return result;
 	}
@@ -470,11 +548,11 @@ public class JedisUtil {
 		}
 	}
 
-	public static void subscribe(byte[] channel) {
+	public static void subscribe(BinaryJedisPubSub jedisPubSub, byte[] channel) {
 		Jedis jedis = null;
 		try {
 			jedis = jedisPool.getResource();
-			jedis.subscribe(new SubscribeService(), channel);
+			jedis.subscribe(jedisPubSub, channel);
 		} catch (Exception e) {
 			jedisPool.returnBrokenResource(jedis);
 			e.printStackTrace();
@@ -482,4 +560,34 @@ public class JedisUtil {
 			close(jedis);
 		}
 	}
+
+	/**
+	 * @date：2016-5-1
+	 * @author：hukai
+	 * @param： todo：TODO 测试用的，不要
+	 */
+	public static void setbit() {
+		Jedis jedis = null;
+		try {
+			jedis = jedisPool.getResource();
+			jedis.setbit("keys5", 1, true);
+			jedis.setbit("keys5", 29, true);
+			jedis.setbit("keys5", 117, true);
+			BitSet bitset = BitSet.valueOf(jedis.get("keys5").getBytes());
+			System.out.println(jedis.get("keys5").getBytes().length);
+			System.out.println(bitset.size());
+			System.out.println(bitset.cardinality());
+
+		} catch (Exception e) {
+			jedisPool.returnBrokenResource(jedis);
+			e.printStackTrace();
+		} finally {
+			close(jedis);
+		}
+	}
+
+	public static void main(String[] args) {
+
+	}
+
 }

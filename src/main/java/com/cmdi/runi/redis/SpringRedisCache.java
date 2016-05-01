@@ -6,6 +6,8 @@ import java.util.Properties;
 import org.springframework.cache.Cache;
 import org.springframework.cache.support.SimpleValueWrapper;
 
+import com.cmdi.runi.util.StringUtils;
+
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
